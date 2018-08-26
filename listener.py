@@ -5,14 +5,18 @@ from tweepy import OAuthHandler
 from tweepy.streaming import StreamListener
 import os
 import io
-import analytics
 from datetime import datetime, date, timedelta
 import time
 import random
+import copy
 import sys
 sys.path.insert(0, '../configs/')
 import configSettings_ao as configSettings
-
+sys.path.insert(0, '../whatAmITalkingAbout/')
+import analytics
+sys.path.insert(0, '../roboTwitter/')
+import plotInfo
+import argumentClass
 
 
 start_time = time.time() #grabs the system time
@@ -34,6 +38,20 @@ def WAITA(who,options):
     print ">>> listener:WAITA: plotName:",plotName
     return plotName
 
+def MeasSum(options="NYS"):
+    print ">>> listener:MeasSum:"
+    argDict=copy.deepcopy(argumentClass.templatePlotDict)
+    argDict['start']=(datetime.now() - timedelta(1))
+    argDict['end']=datetime.now()
+    argDict['save']="True"
+    argDict['saveName']="plots/MeasSum"+datetime.now().strftime("%Y-%m-%d")+".png"
+    print ">>> listener:MeasSum: argDict:",argDict
+    twitterInfo=plotInfo.GleanTwitter(argDict)
+    print ">>> listener:MeasSum: twitterInfo:",len(twitterInfo)
+    plotName=plotInfo.PlotData(argDict,twitterInfo)
+    print ">>> listener:MeasSum: plotName:",plotName
+    return plotName
+
 
 def TextCommand(txt, who="OracleAuto"):
 
@@ -43,12 +61,17 @@ def TextCommand(txt, who="OracleAuto"):
             plotName=WAITA(who,t[t.find('(')+1:t.find(')')])
             print ">>> listener:TextCommand: file to tweet:",plotName
             tweet_image(plotName,"@"+who+" this is what you're talking about...")
-        elif "that" in t:
-            print "in that"
-            tweet_image("helium.jpg","@"+who+" it's elemental")
+        elif "easSum" in t:
+            print ">>> listener:TextCommand: processing talk"
+            plotName=MeasSum()
+            print ">>> listener:TextCommand: file to tweet:",plotName
+            tweet_image(plotName,"@"+who+" some stats")
         elif "other" in t:
             print "in other"
-            tweet_image("lithium.jpg","@red_hot_kenny it's elemental")
+            elArr=["hydorgen.jpg","helium.jpg","lithium.jpg"]
+            plotName=elArr[random.uniform(0,len(elArr)-1)]
+            print ">>> listener:TextCommand: file to tweet:",plotName
+            tweet_image(plotName,"@"+who+" it's elemental")
         else:
             print "unknown command:",t
 
