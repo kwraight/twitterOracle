@@ -44,7 +44,7 @@ def MeasSum(options="NYS"):
     argDict['start']=(datetime.now() - timedelta(1))
     argDict['end']=datetime.now()
     argDict['save']="True"
-    argDict['saveName']="plots/MeasSum"+datetime.now().strftime("%Y-%m-%d")+".png"
+    argDict['saveName']="plots/MeasSum_"+datetime.now().strftime("%Y-%m-%d")+".png"
     print ">>> listener:MeasSum: argDict:",argDict
     twitterInfo=plotInfo.GleanTwitter(argDict)
     print ">>> listener:MeasSum: twitterInfo:",len(twitterInfo)
@@ -90,7 +90,7 @@ class listener(StreamListener):
         
         #saveFile = io.open('raw_tweets.json', 'a', encoding='utf-8')
         
-        while (time.time() - self.time) < self.limit:
+        while True: #(time.time() - self.time) < self.limit:
             
             try:
                 self.tweet_data.append(data)
@@ -119,7 +119,9 @@ class listener(StreamListener):
 
     def on_error(self, status):
         print status
-
+        if status == 420:
+            print "sleeping for ten minutes, starting:",str(datetime.now())
+            time.sleep(10*60)
 
 auth = OAuthHandler(configSettings.cfg['consumer_key'], configSettings.cfg['consumer_secret']) #OAuth object
 auth.set_access_token(configSettings.cfg['access_token'], configSettings.cfg['access_token_secret'])
