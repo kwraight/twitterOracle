@@ -81,7 +81,8 @@ def TextCommand(txt, who="OracleAuto"):
 class listener(StreamListener):
     
     def __init__(self, start_time, time_limit=60):
-        
+	
+        print "listening..." 
         self.time = start_time
         self.limit = time_limit
         self.tweet_data = []
