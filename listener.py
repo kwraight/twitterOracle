@@ -24,17 +24,28 @@ keyword_list = ['OracleAuto'] #track list
 
 def ProcessOptions(tweet): # assum comma seporated, brackets inclosed, e.g. (a_key:a_val,b_key:b_val,c_key:c_val). Return dictionary
     options={}
+    
     if tweet.find('(')==-1 or tweet.find(')')==-1:
         print ">>> listener:ProcessOptions: option set format not recognised: no brackets"
         return{}
+    tweet=tweet[tweet.find('(')+1:tweet.find(')')]
     if tweet.find(',')==-1:
-        print ">>> listener:ProcessOptions:option list format not recognised: no commas"
-        return{}
-    for pair in tweet[tweet.find('(')+1:tweet.find(')')].split(","):
-        if pair.find(':')==-1:
-            print ">>> listener:ProcessOptions:option pair format not recognised:",pair
+        print ">>> listener:ProcessOptions: option list format as no commas"
+        if tweet.find(':')==-1:
+            print ">>> listener:ProcessOptions: option tweet format not recognised:",tweet
+            return {}
         else:
-            options[pair.split(:)[0]]=pair.split(:)[1]]
+            print ">>> listener:ProcessOptions: add to dictionary:",tweet
+            options[tweet.split(':')[0].encode('ascii', 'ignore')]=tweet.split(':')[1].encode('ascii', 'ignore')
+
+    else:        
+        for pair in tweet.split(","):
+            if pair.find(':')==-1:
+                print ">>> listener:ProcessOptions:option pair format not recognised:",pair
+            else:
+                print ">>> listener:ProcessOptions: add to dictionary (pair):",pair
+                options[pair.split(':')[0].encode('ascii', 'ignore')]=pair.split(':')[1].encode('ascii', 'ignore')
+                
     return options
 
 
@@ -44,7 +55,7 @@ def tweet_image(filename, message):
     api.update_with_media(filename, status=message)
     return
 
-def WAITA(who,options):
+def WAITA(who,options={}):
     print ">>> listener:WAITA: inside:",who
     argDict={'who':who, 'start':(datetime.now() - timedelta(1)), 'end':datetime.now(), 'pages':"-1", 'topics':"nhs"}
     print ">>> listener:WAITA: argDict:",argDict
@@ -75,19 +86,22 @@ def TextCommand(txt, who="OracleAuto"):
         if "WAITA" in t or "waita" in t:
             print ">>> listener:TextCommand: processing waita"
             opts=ProcessOptions(t)
+            print ">>> listener:TextCommand: opts:",opts
             plotName=WAITA(who,opts)
             print ">>> listener:TextCommand: file to tweet:",plotName
             tweet_image(plotName,"@"+who+" this is what you're talking about...")
         elif "WATTA" in t or "watta" in t:
             print ">>> listener:TextCommand: processing watta"
             opts=ProcessOptions(t)
-            if "whoElse" in opts.keys:
+            print ">>> listener:TextCommand: opts:",opts
+            if "whoElse" in opts.keys():
                 plotName=WAITA(opts['whoElse'],opts)
             print ">>> listener:TextCommand: file to tweet:",plotName
-            tweet_image(plotName,"@"+who+" this is what you're talking about...")
+            tweet_image(plotName,"@"+who+" this is what "+opts['whoElse']+" is talking about...")
         elif "easSum" in t:
             print ">>> listener:TextCommand: processing MeasSum"
             opts=ProcessOptions(t)
+            print ">>> listener:TextCommand: opts:",opts
             plotName=MeasSum(opts)
             print ">>> listener:TextCommand: file to tweet:",plotName
             tweet_image(plotName,"@"+who+" some stats")
