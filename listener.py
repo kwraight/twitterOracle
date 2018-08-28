@@ -22,6 +22,22 @@ import argumentClass
 start_time = time.time() #grabs the system time
 keyword_list = ['OracleAuto'] #track list
 
+def ProcessOptions(tweet): # assum comma seporated, brackets inclosed, e.g. (a_key:a_val,b_key:b_val,c_key:c_val). Return dictionary
+    options={}
+    if tweet.find('(')==-1 or tweet.find(')')==-1:
+        print ">>> listener:ProcessOptions: option set format not recognised: no brackets"
+        return{}
+    if tweet.find(',')==-1:
+        print ">>> listener:ProcessOptions:option list format not recognised: no commas"
+        return{}
+    for pair in tweet[tweet.find('(')+1:tweet.find(')')].split(","):
+        if pair.find(':')==-1:
+            print ">>> listener:ProcessOptions:option pair format not recognised:",pair
+        else:
+            options[pair.split(:)[0]]=pair.split(:)[1]]
+    return options
+
+
 def tweet_image(filename, message):
     api=configSettings.get_api()
     #api.update_status(status=message)
@@ -38,7 +54,7 @@ def WAITA(who,options):
     print ">>> listener:WAITA: plotName:",plotName
     return plotName
 
-def MeasSum(options="NYS"):
+def MeasSum(options={}):
     print ">>> listener:MeasSum:"
     argDict=copy.deepcopy(argumentClass.templatePlotDict)
     argDict['start']=(datetime.now() - timedelta(1))
@@ -57,17 +73,26 @@ def TextCommand(txt, who="OracleAuto"):
 
     for t in txt.split(' '):
         if "WAITA" in t or "waita" in t:
-            print ">>> listener:TextCommand: processing talk"
-            plotName=WAITA(who,t[t.find('(')+1:t.find(')')])
+            print ">>> listener:TextCommand: processing waita"
+            opts=ProcessOptions(t)
+            plotName=WAITA(who,opts)
+            print ">>> listener:TextCommand: file to tweet:",plotName
+            tweet_image(plotName,"@"+who+" this is what you're talking about...")
+        elif "WATTA" in t or "watta" in t:
+            print ">>> listener:TextCommand: processing watta"
+            opts=ProcessOptions(t)
+            if "whoElse" in opts.keys:
+                plotName=WAITA(opts['whoElse'],opts)
             print ">>> listener:TextCommand: file to tweet:",plotName
             tweet_image(plotName,"@"+who+" this is what you're talking about...")
         elif "easSum" in t:
-            print ">>> listener:TextCommand: processing talk"
-            plotName=MeasSum()
+            print ">>> listener:TextCommand: processing MeasSum"
+            opts=ProcessOptions(t)
+            plotName=MeasSum(opts)
             print ">>> listener:TextCommand: file to tweet:",plotName
             tweet_image(plotName,"@"+who+" some stats")
         elif "other" in t:
-            print "in other"
+            print ">>> listener:TextCommand: processing other"
             elArr=["hydorgen.jpg","helium.jpg","lithium.jpg"]
             plotName=elArr[random.uniform(0,len(elArr)-1)]
             print ">>> listener:TextCommand: file to tweet:",plotName
@@ -81,15 +106,14 @@ def TextCommand(txt, who="OracleAuto"):
 class listener(StreamListener):
     
     def __init__(self, start_time, time_limit=60):
-	
-        print "listening..." 
+        
+        print "listening..."
+        
         self.time = start_time
         self.limit = time_limit
         self.tweet_data = []
     
     def on_data(self, data):
-        
-        #saveFile = io.open('raw_tweets.json', 'a', encoding='utf-8')
         
         while True: #(time.time() - self.time) < self.limit:
             
@@ -106,17 +130,6 @@ class listener(StreamListener):
                 print 'failed ondata,', str(e)
                 time.sleep(5)
                 pass
-
-
-
-        '''
-        saveFile = io.open('raw_tweets.json', 'w', encoding='utf-8')
-        saveFile.write(u'[\n')
-        saveFile.write(','.join(self.tweet_data))
-        saveFile.write(u'\n]')
-        saveFile.close()
-        exit()
-        '''
 
     def on_error(self, status):
         print status
